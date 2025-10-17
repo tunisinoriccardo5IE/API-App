@@ -1,19 +1,23 @@
 import base64
 import time
 from urllib.parse import urlencode
+import os
+from typing import Optional
 
 import requests
 
-from src.config import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
-
+# Read Spotify credentials from environment if available; class __init__ will use env vars when not passed
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 
 class SpotifyClient:
-    def __init__(self, client_id: str = None, client_secret: str = None):
+    def __init__(self, client_id: Optional[str] = None, client_secret: Optional[str] = None):
         self.client_id = client_id or SPOTIFY_CLIENT_ID
         self.client_secret = client_secret or SPOTIFY_CLIENT_SECRET
         self.token = None
         self.token_expires_at = 0
         self.auth_url = "https://accounts.spotify.com/api/token"
+        self.base_url = "https://api.spotify.com/v1"
         self.base_url = "https://api.spotify.com/v1"
 
     def authenticate(self):
@@ -39,7 +43,30 @@ class SpotifyClient:
     def _headers(self):
         token = self.authenticate()
         return {"Authorization": f"Bearer {token}"}
-
+    def get_track(self, track_id):
+        """Get Spotify track information by track ID."""
+        if not track_id:
+            return None
+        try:
+            url = f"{self.base_url}/tracks/{track_id}"
+            r = requests.get(url, headers=self._headers(), timeout=10)
+            r.raise_for_status()
+            it = r.json()
+            thumb = None
+            images = it.get("album", {}).get("images") or []
+            if images:
+                thumb = images[0].get("url")
+            return {
+                "id": it.get("id"),
+                "name": it.get("name"),
+                "url": it.get("external_urls", {}).get("spotify"),
+                "thumbnail": thumb,
+                "preview_url": it.get("preview_url"),
+                "artists": [a.get("name") for a in it.get("artists", [])]
+            }
+        except Exception as e:
+            print(f"Error getting track: {e}")
+            return None
     def search(self, q: str, type_: str, limit: int = 10):
         if not q:
             return []

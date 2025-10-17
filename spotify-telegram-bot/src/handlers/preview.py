@@ -8,7 +8,9 @@ def preview_track(track_id):
     if track_info:
         preview_url = track_info['preview_url']
         track_name = track_info['name']
-        artist_name = ', '.join(artist['name'] for artist in track_info['artists'])
+        artists = track_info.get('artists') or []
+        artist_names = [str(a.get('name')) for a in artists if isinstance(a, dict) and a.get('name') is not None]
+        artist_name = ', '.join(artist_names) if artist_names else 'Unknown artist'
         
         return f"Preview of '{track_name}' by {artist_name}: {preview_url}"
     else:
