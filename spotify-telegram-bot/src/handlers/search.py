@@ -1,26 +1,20 @@
-from services.spotify_client import SpotifyClient
-from services.telegram_client import TelegramClient
+from src.services.spotify_client import SpotifyClient
+from src.config import SEARCH_LIMIT
 
-def search_song(query):
-    spotify_client = SpotifyClient()
-    results = spotify_client.search_songs(query)
-    formatted_results = format_search_results(results)
-    return formatted_results
 
-def search_artist(query):
-    spotify_client = SpotifyClient()
-    results = spotify_client.search_artists(query)
-    formatted_results = format_search_results(results)
-    return formatted_results
+def search_song(query: str):
+    client = SpotifyClient()
+    client.authenticate()
+    return client.search(query, "track", limit=SEARCH_LIMIT)
 
-def search_playlist(query):
-    spotify_client = SpotifyClient()
-    results = spotify_client.search_playlists(query)
-    formatted_results = format_search_results(results)
-    return formatted_results
 
-def format_search_results(results):
-    formatted = []
-    for item in results:
-        formatted.append(f"{item['name']} by {item['artist']} - {item['url']}")
-    return "\n".join(formatted) if formatted else "No results found."
+def search_artist(query: str):
+    client = SpotifyClient()
+    client.authenticate()
+    return client.search(query, "artist", limit=SEARCH_LIMIT)
+
+
+def search_playlist(query: str):
+    client = SpotifyClient()
+    client.authenticate()
+    return client.search(query, "playlist", limit=SEARCH_LIMIT)
